@@ -29,14 +29,31 @@ local function update_gtags()
     return
   end
 
-  vim.notify("AutoGtags: Starting Gtags update...", vim.log.levels.INFO, { title = "Gtags" })
+  local command_to_run = {}
+  local start_message = ""
+  local success_message = ""
+  local error_message = ""
 
-  vim.system({ "gtags" }, { cwd = project_root }, function(result)
+  if #gtags_file > 0 then
+    command_to_run = { "global", "-u" }
+    start_message = "AutoGtags: Starting incremental update (global -u)..."
+    success_message = "AutoGtags: Incremental update successful."
+    error_message = "AutoGtags: Incremental update failed:\n"
+  else
+    command_to_run = { "gtags" }
+    start_message = "AutoGtags: GTAGS not found. Starting full build (gtags)..."
+    success_message = "AutoGtags: Full build successful."
+    error_message = "AutoGtags: Full build failed:\n"
+  end
+
+  vim.notify(start_message, vim.log.levels.INFO, { title = "Gtags" })
+
+  vim.system(command_to_run, { cwd = project_root }, function(result)
     if result.code == 0 then
-      vim.notify("AutoGtags: Gtags update successful.", vim.log.levels.INFO, { title = "Gtags" })
+      vim.notify(success_message, vim.log.levels.INFO, { title = "Gtags" })
     else
       vim.notify(
-        "AutoGtags: Gtags update failed:\n" .. table.concat(result.stderr, "\n"),
+        error_message .. table.concat(result.stderr, "\n"),
         vim.log.levels.ERROR,
         { title = "Gtags" }
       )
